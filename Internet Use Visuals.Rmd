@@ -1,0 +1,73 @@
+---
+title: "Internet Use Visuals"
+author: "Bridget Sheehy"
+date: "2025-12-15"
+output: html_document
+---
+
+
+```{r}
+plot_data <- GSSModel[!is.na(GSSModel$sex), ]
+plot_data$year <- as.numeric(as.character(plot_data$year))
+```
+
+
+```{r}
+model_year_sex <- glm(wwwhr ~ year * sex,
+                      family = poisson(link = "log"),
+                      data = plot_data)
+
+pred_grid <- expand.grid(
+  year = seq(min(plot_data$year), max(plot_data$year)),
+  sex  = levels(plot_data$sex)
+)
+
+pred_grid$wwwhr_hat <- predict(model_year_sex, newdata = pred_grid, type = "response")
+
+library(ggplot2)
+ggplot(pred_grid, aes(x = year, y = wwwhr_hat, color = sex)) +
+  geom_line(linewidth = 1.2) +
+  theme_minimal() +
+  labs(x = "Year", y = "Predicted Internet Use (hours)", title = "Predicted Internet Use by Year and Sex",
+    color = "Sex"
+  ) +
+  scale_color_discrete(labels = c("Male", "Female"))
+
+ggsave("predicted_wwwhr_by_year_and_sex.png",
+       width = 7, height = 5, dpi = 300)
+
+```
+
+```{r}
+# Poisson model with AGE x SEX
+model_age_sex <- glm(wwwhr ~ age * sex,
+                     family = poisson(link = "log"),
+                     data = plot_data)
+
+# Prediction grid: AGE on x-axis, separate lines by sex
+pred_grid <- expand.grid(
+  age = seq(min(plot_data$age, na.rm = TRUE), max(plot_data$age, na.rm = TRUE)),
+  sex = levels(plot_data$sex)
+)
+
+# Predicted mean wwwhr (response scale)
+pred_grid$wwwhr_hat <- predict(model_age_sex, newdata = pred_grid, type = "response")
+
+library(ggplot2)
+
+ggplot(pred_grid, aes(x = age, y = wwwhr_hat, color = sex)) +
+  geom_line(linewidth = 1.2) +
+  theme_minimal() +
+  labs(
+    x = "Age",
+    y = "Predicted Internet Use (hours)",
+    title = "Predicted Internet Use by Age and Sex",
+    color = "Sex"
+  ) + 
+  scale_color_discrete(labels = c("Male", "Female"))
+
+ggsave("predicted_wwwhr_by_age_and_sex.png",
+       width = 7, height = 5, dpi = 300)
+
+```
+

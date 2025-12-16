@@ -1,0 +1,93 @@
+---
+title: "Internet Use Code"
+author: "Bridget Sheehy"
+date: "2025-12-07"
+output: html_document
+---
+
+```{r}
+#Read in cleaned data
+GSSData <- readRDS("GSS-Raw.rds")
+```
+
+```{r}
+#converting factors
+GSSData$sex     <- factor(GSSData$sex)
+GSSData$race    <- factor(GSSData$race)
+GSSData$region  <- factor(GSSData$region)
+GSSData$wrkstat <- factor(GSSData$wrkstat)
+```
+
+
+```{r}
+#year fixed effects factor
+GSSData$year <- factor(GSSData$year)
+```
+
+```{r}
+#drop na's
+GSSModel <- subset(GSSData, !is.na(wwwhr))
+```
+
+```{r}
+#Poisson Regression
+model_pois <- glm(
+  wwwhr ~ age + educ + sex + race + region + wrkstat + year,
+  data   = GSSModel,
+  family = poisson(link = "log")
+)
+
+summary(model_pois)
+
+#Save as excel
+model_summary <- summary(model_pois)
+coef_df <- as.data.frame(model_summary$coefficients)
+
+# Add variable names as a column
+coef_df$Variable <- rownames(coef_df)
+rownames(coef_df) <- NULL
+
+library(writexl)
+write_xlsx(coef_df, "poisson_model_summary.xlsx")
+```
+
+
+```{r}
+# MASON CODE HERE:
+
+# Checking for overdispersion... if the mean of your D.V. > the variance of your D.V., this is called "overdispersion"
+# and can deflate your standard errors/ inflate your z/t values.  
+mean(GSSModel$wwwhr) # mean = 11.1
+var(GSSModel$wwwhr) # variance = 232.4
+
+# Looks like overdisperion is present, but to check for sure, you can run the code below (small p-value for the test below indicates
+# overdispersion is present)
+
+# To formally check 
+#install.packages("AER")
+library(AER)
+dispersiontest(model_pois)
+
+# p <.00001 ... definitely overdispersion.
+
+# Because of this, you'll want to run a Quasi-Poisson model rather than the regular Poisson model. This quasi version relaxes the assumption that the mean = the variance. You'll notice that your coefficient estimates will be the exact same as your original model... The change is that it will result in larger standard errors, but will be more reliable than the regular version.
+
+model_qpois <- glm(
+  wwwhr ~ age + educ + sex + race + region + wrkstat + year,
+  data   = GSSModel,
+  family = quasipoisson(link = "log")
+)
+summary(model_qpois)
+
+#save as excel
+qpois_summary <- summary(model_qpois)
+qpois_coef_df <- as.data.frame(qpois_summary$coefficients)
+
+# Add variable names as a column
+qpois_coef_df$Variable <- rownames(qpois_coef_df)
+rownames(qpois_coef_df) <- NULL
+
+library(writexl)
+write_xlsx(qpois_coef_df, "quasipoisson_model_summary.xlsx")
+```
+
