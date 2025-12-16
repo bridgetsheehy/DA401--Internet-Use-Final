@@ -76,15 +76,15 @@ Figure A2: Predicted weekly internet use by survey year and sex
 
 Tools & Libraries
 
-R — primary programming language
+R-  primary programming language
 
-tidyverse — data cleaning and manipulation
+tidyverse- data cleaning and manipulation
 
-ggplot2 — data visualization
+ggplot2- data visualization
 
-stats — Poisson and quasi-Poisson regression modeling
+stats- Poisson and quasi-Poisson regression modeling
 
-R Markdown — analysis documentation and reproducibility
+R Markdown- analysis documentation and reproducibility
 
 Limitations
 
